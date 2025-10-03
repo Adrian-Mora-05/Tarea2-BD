@@ -1,0 +1,327 @@
+/* Fuente TASA Orbiter para filas */
+@import url('https://fonts.googleapis.com/css2?family=TASA+Orbiter:wght@400..800&display=swap');
+
+/* Estilos generales del body */
+body {
+  font-family: 'TASA Orbiter', Arial, sans-serif;
+  margin: 20px;
+  background-color: #acc9f0; /* azul claro de fondo */
+}
+
+/* Título principal */
+h1 {
+  text-align: center;
+  color: #0e049bbd;
+  font-size: 42px; 
+}
+
+/* Estilos generales de la tabla */
+#empleadosTable {
+  width: 80%;
+  margin: 20px auto;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+  font-family: 'TASA Orbiter', sans-serif;
+}
+
+/* Encabezado como franja redondeada completa */
+#empleadosTable thead {
+  background-color: #014fb6;
+  color: #fff;
+  border-radius: 10px;
+  display: table-header-group;
+}
+
+#empleadosTable thead tr {
+  border-radius: 10px;
+}
+
+#empleadosTable th {
+  padding: 12px;
+  text-align: center;
+}
+
+/* Aplica los bordes redondeados al primer y último th */
+#empleadosTable th:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+#empleadosTable th:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+/* Filas del cuerpo */
+#empleadosTable tbody tr {
+  background: linear-gradient(90deg, #fff9f0, #fff);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  border-radius: 10px;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+#empleadosTable tbody tr:hover {
+  transform: translateY(-3px); /* se levanta un poco */
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+/* Celdas */
+#empleadosTable td {
+  text-align: center;
+  padding: 12px;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 18px;
+  color: #3b3b3b;
+}
+
+/* Responsive: Vista en pantallas pequeñas */
+@media screen and (max-width: 600px) {
+  #empleadosTable {
+    width: 95%;
+  }
+
+   /* Se oculta el encabezado */
+  #empleadosTable thead {
+    display: none;
+  }
+
+  /* Cada fila se muestra como bloque vertical */
+  #empleadosTable tbody tr {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    padding: 12px;
+  }
+
+  /* Se muestra el nombre de la columna antes de cada celda */
+  #empleadosTable td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 5px;
+    color: #0165e7;
+  }
+}
+
+
+
+/* Botón "Insertar" */
+#insertarBtn {
+  margin: 20px auto 0 10%; /* margen izquierdo del 10% */
+  display: block;
+  padding: 12px 24px;
+  background-color: #014fb6;
+  color: white;
+  font-family: 'TASA Orbiter', sans-serif;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+#insertarBtn:hover {
+  background-color: #0165e7; /* azul más claro al pasar el cursor */
+  box-shadow: 0 8px 20px rgba(1, 101, 231, 0.5); /* efecto de brillo */
+}
+
+
+/* Modal base */
+.modal {
+  display: none; /* Oculto por defecto */
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.4); /* Fondo oscuro transparente */
+}
+
+/* Contenedor del modal */
+.modal-contenido {
+  background-color: #fff8f0;
+  margin: 10% auto;
+  padding: 30px;
+  border: 2px solid #ff8c00;
+  width: 400px;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Título del modal */
+.modal-contenido h2 {
+  font-family: 'TASA Orbiter', sans-serif;
+  text-align: center;
+  color: #ff7700;
+  margin-bottom: 25px;
+}
+
+/* Labels del formato*/
+.modal-contenido label {
+  font-family: 'TASA Orbiter', sans-serif;
+  display: block;
+  margin-top: 10px;
+  font-size: 16px;
+  color: #e65c00;
+}
+
+/* Inputs */
+.modal-contenido input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 15px;
+  box-sizing: border-box;
+  background-color: #ffffff;
+}
+
+/* Botones Insertar y Regresar */
+.botones {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn-modal {
+  background-color: #ff8c00;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: 'TASA Orbiter', sans-serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.btn-modal:hover {
+  background-color: #ffa94d;
+  box-shadow: 0 0 15px rgba(255, 140, 0, 0.6);
+}
+
+/* Mensajes de error debajo de inputs */
+.mensaje-error {
+  color: red;
+  font-size: 14px;
+  margin-top: 5px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+
+/* Modal de éxito */
+#modalExito {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-exito-contenido {
+  background-color: #fff;
+  margin: 15% auto;
+  padding: 30px;
+  border-radius: 12px;
+  width: 350px;
+  text-align: center;
+  font-family: 'TASA Orbiter', sans-serif;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  animation: fadeIn 0.4s ease-in-out;      /* animación al aparecer */
+}
+
+.modal-exito-contenido h2 {
+  color: #28a745;         /* verde */
+  margin-bottom: 10px;
+}
+
+.modal-exito-contenido p {
+  font-size: 16px;
+  color: #333;
+}
+
+.modal-exito-contenido button {
+  margin-top: 15px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: 'TASA Orbiter', sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.modal-exito-contenido button:hover {
+  background-color: #34d058;
+  box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+}
+
+/* Animación de entrada */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+
+/* Modal de error */
+#modalError {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-error-contenido {
+  background-color: #fff;
+  margin: 15% auto;
+  padding: 30px;
+  border-radius: 12px;
+  width: 350px;
+  text-align: center;
+  font-family: 'TASA Orbiter', sans-serif;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.modal-error-contenido h2 {
+  color: #e53935;         /* rojo */
+  margin-bottom: 10px;
+}
+
+.modal-error-contenido p {
+  font-size: 16px;
+  color: #333;
+}
+
+.modal-error-contenido button {
+  margin-top: 15px;
+  background-color: #e53935;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: 'TASA Orbiter', sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.modal-error-contenido button:hover {
+  background-color: #ff6b6b;
+  box-shadow: 0 0 10px rgba(229, 57, 53, 0.5);
+}
