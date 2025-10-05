@@ -19,7 +19,7 @@ async function cargarEmpleados() {
             const fila = document.createElement('tr');
             // Inserta las celdas (td) con los datos del empleado
             fila.innerHTML = `
-                <td>${empleado.ID}</td>
+                <td>${empleado.id}</td>
                 <td>${empleado.Nombre}</td>
                 <td>${empleado.Salario}</td>
             `;

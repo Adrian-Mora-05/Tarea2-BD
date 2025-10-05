@@ -33,7 +33,7 @@ async function enviarXML() {
     const resultado = await pool.request()
       .input('inArchivoXML', sql.NVarChar(sql.MAX), xmlContent)
       .output('outResultCode', sql.Int)
-      .execute('CargaSimulacion'); // Nombre del SP
+      .execute('SP_CargarDatos'); // Nombre del SP
 
     console.log('Resultado del SP:', resultado.output);
     console.log('XML enviado correctamente y procesado en SQL Server.');
