@@ -2,7 +2,7 @@
 import {Router} from 'express';
 
 // Importa las funciones del controlador que manejarán las peticiones
-import {getEmpleados, createEmpleado} from '../controllers/empleados.controllers.js';
+import {getEmpleados, postEmpleado} from '../controllers/empleados.controllers.js';
 
 // Crea una instancia del enrutador
 const router = Router();
@@ -13,7 +13,7 @@ const router = Router();
 router.get('/empleados', getEmpleados);
 
 // Ruta POST /empleados: Crea un nuevo empleado en la base de datos
-router.post('/empleados', createEmpleado);
+router.post('/empleados', postEmpleado);
 
 // Exporta el enrutador para que pueda ser usado en app.js
 export default router;
