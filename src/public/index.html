@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lista de Empleados</title>
+  <link rel="stylesheet" href="styles.css" /> <!-- Estilos externos METER ESTO EN PUBLIC -->
+</head>
+<body>
+  <h1>Lista de Empleados</h1>
+
+  <!-- Tabla donde se mostrarán los empleados -->
+  <table id="empleadosTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Salario</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Aquí se insertarán las filas dinámicamente -->
+    </tbody>
+  </table>
+  <!-- Botón que abre el modal de inserción -->
+  <button id="insertarBtn" onclick="abrirModal()">Insertar</button>
+
+<!-- Modal para insertar un nuevo empleado -->
+<div id="modalInsertar" class="modal">
+  <div class="modal-contenido">
+    <h2>Insertar Empleado</h2>
+    
+    <!-- Campo de nombre -->
+    <label for="nombre">Nombre:</label>
+    <input type="text" id="nombre" placeholder="Ingrese el nombre...">
+    <div class="mensaje-error" id="error-nombre"></div>
+
+    <!-- Campo de salario -->
+    <label for="salario">Salario:</label>
+    <input type="text" id="salario" placeholder="Ingrese el salario...">
+    <div class="mensaje-error" id="error-salario"></div>
+
+    <!-- Botones del modal -->
+    <div class="botones">
+      <button class="btn-modal" onclick="validarFormulario()">Insertar</button>
+      <button class="btn-modal" onclick="cerrarModal()">Regresar</button>
+    </div>
+  </div>
+</div>
+
+
+  <!-- Modal que aparece cuando la inserción fue exitosa -->
+  <div id="modalExito" class="modal">
+    <div class="modal-exito-contenido">
+      <h2>✅ Inserción exitosa</h2>
+      <p>El empleado ha sido registrado correctamente.</p>
+      <button onclick="cerrarModalExito()">Aceptar</button>
+    </div>
+  </div>
+
+  <!-- Modal que aparece cuando ocurre un error -->
+  <div id="modalError" class="modal">
+    <div class="modal-error-contenido">
+      <h2>⚠️ Error</h2>
+      <p>Empleado ya existe.</p>
+      <button onclick="cerrarModalError()">Aceptar</button>
+    </div>
+  </div>
+
+<!-- Script externo con la lógica -->
+  <script src="script.js"></script>
+
+  <script>
+  // Abre el modal de inserción
+  function abrirModal() {
+    document.getElementById("modalInsertar").style.display = "block";
+  }
+
+  // Cierra el modal de inserción y limpia los campos
+  function cerrarModal() {
+    document.getElementById("modalInsertar").style.display = "none";
+    limpiarFormulario();
+  }
+
+  // Limpia los campos del formulario
+  function limpiarFormulario() {
+    document.getElementById("nombre").value = "";
+    document.getElementById("salario").value = "";
+    document.getElementById("error-nombre").innerText = "";
+    document.getElementById("error-salario").innerText = "";
+  }
+
+  // Valida el formulario y envía los datos al backend
+  function validarFormulario() {
+  const nombreInput = document.getElementById("nombre");
+  const salarioInput = document.getElementById("salario");
+
+  const nombre = nombreInput.value.trim();
+  const salario = salarioInput.value.replace(/,/g, '').trim(); // Limpiar comas
+
+  const errorNombre = document.getElementById("error-nombre");
+  const errorSalario = document.getElementById("error-salario");
+
+  // Limpia mensajes previos
+  errorNombre.innerText = ""; 
+  errorSalario.innerText = "";
+ 
+  // Expresiones regulares para validar nombre (con letras y guiones)
+  const regexNombre = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\- ]+$/;
+  // Expresiones regulares para validar salario con hasta 2 decimales
+  const regexSalario = /^\d{1,3}(,\d{3})*(\.\d{1,2})?$|^\d+(\.\d{1,2})?$/;
+
+
+  let esValido = true;
+ 
+  // Validación del nombre
+  if (nombre === "") {
+    errorNombre.innerText = "Por favor llenar este campo";
+    esValido = false;
+  } else if (!regexNombre.test(nombre)) {
+    errorNombre.innerText = "El nombre solo debe contener letras o guiones";
+    esValido = false;
+  }
+
+  // Validación del salario
+  if (salario === "") {
+    errorSalario.innerText = "Por favor llenar este campo";
+    esValido = false;
+  } else if (!regexSalario.test(salario)) {
+    errorSalario.innerText = "Ingrese un valor monetario válido";
+    esValido = false;
+  }
+
+  if (!esValido) return;
+
+  // Si todo es válido, enviar al backend
+  fetch('/empleados', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ Nombre: nombre, Salario: salario })
+  })
+    .then(async (response) => {
+      const data = await response.json();
+
+      // Si todo salió bien
+      if (response.ok && data.success) {
+        cerrarModal();          // Cierra el modal de formulario
+        mostrarModalExito();    // Muestra modal de éxito
+        cargarEmpleados();      // Refresca la tabla
+
+      } else {    
+        // Si viene error de nombre ya existente
+        if (data.codigo === 50002) {
+          cerrarModal(); // Cierra el modal de inserción actual
+          mostrarModalError(); // Muestra el nuevo modal de error
+          
+        } else {
+          alert(data.message || 'Error al insertar el empleado.');
+        }
+      }
+    })
+    .catch((error) => {
+      console.error('Error al insertar empleado:', error);
+      alert('Error de servidor al insertar.');
+    });
+}
+
+
+
+  // Cierra el modal si se hace clic fuera del contenido
+  window.onclick = function(event) {
+    const modal = document.getElementById("modalInsertar");
+    if (event.target === modal) {
+      modal.style.display = "none";
+      limpiarFormulario();
+    }
+  }
+
+  // Validación en tiempo real
+  document.addEventListener("DOMContentLoaded", function () {
+    const nombreInput = document.getElementById("nombre");
+    const salarioInput = document.getElementById("salario");
+
+    const regexNombre = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\- ]+$/;
+    const regexSalario = /^\d{1,3}(,\d{3})*(\.\d{1,2})?$|^\d+(\.\d{1,2})?$/;
+
+    // Validar nombre mientras escribe
+    nombreInput.addEventListener("input", function () {
+      const nombre = this.value.trim();
+      if (nombre === "") {
+        document.getElementById("error-nombre").innerText = "Por favor llenar este campo";
+      } else if (!regexNombre.test(nombre)) {
+        document.getElementById("error-nombre").innerText = "El nombre solo debe contener letras o guiones";
+      } else {
+        document.getElementById("error-nombre").innerText = "";
+      }
+    });
+
+  // Validar salario mientras escribe y formatear con comas y decimales
+    salarioInput.addEventListener("input", function () {
+      let rawValue = this.value.replace(/,/g, ''); // quitar comas
+
+      // Permitir solo dígitos y máximo un punto
+      rawValue = rawValue.replace(/[^0-9.]/g, '');
+      const parts = rawValue.split('.');
+
+      if (parts.length > 2) {
+        rawValue = parts[0] + '.' + parts.slice(1).join('');
+      }
+
+      let intPart = parts[0] || "";
+      let decPart = parts[1] || "";
+
+      // Insertar comas en la parte entera (solo si no está vacío)
+      if (intPart) {
+        intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+
+      // Reconstruir
+      let formatted;
+      if (parts.length === 2) {
+        formatted = intPart + '.' + decPart.slice(0, 2); // máx 2 decimales
+      } else {
+        formatted = intPart;
+      }
+
+      this.value = formatted;
+
+      // Validar contra regex
+      if (!regexSalario.test(formatted)) {
+        document.getElementById("error-salario").innerText =
+          "Ingrese un valor monetario válido (ej: 1,000.00)";
+      } else {
+        document.getElementById("error-salario").innerText = "";
+      }
+    });
+  }); 
+ 
+  // Funciones para mostrar/cerrar modales de éxito y error
+  function mostrarModalExito() {
+    document.getElementById("modalExito").style.display = "block";
+    }
+
+  function cerrarModalExito() {
+    document.getElementById("modalExito").style.display = "none";
+    }
+
+  function mostrarModalError() {
+      document.getElementById("modalError").style.display = "block";
+    }
+
+  function cerrarModalError() {
+      document.getElementById("modalError").style.display = "none";
+      abrirModal(); // Volver a abrir el form de inserción
+      limpiarFormulario(); // Limpiar campos
+    }
+
+
+
+</script>
+
+ 
+
+
+
+</body>
+</html>
+
+
