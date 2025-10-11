@@ -12,6 +12,6 @@ app.use(express.json());
 app.use(express.static("public"));
 
 // Agrega las rutas de empleados a la aplicación
-app.use(empleadoRoutes);
+app.use('/empleados', empleadoRoutes);
 // Exporta la instancia de la aplicación para poder usarla en otros archivos
 export default app;

@@ -1,60 +1,45 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Lista de Empleados</title>
-  <link rel="stylesheet" href="../styles.css" />
+  <meta charset="UTF-8">
+  <title>Gestión de Empleados</title>
+  <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
-  <h1>Lista de Empleados</h1>
+  <h1>Gestión de Empleados</h1>
 
+  <!-- Sección de búsqueda -->
+  <div class="filtro-container">
+    <input type="text" id="filtroInput" placeholder="Buscar por nombre o documento...">
+     <button id="btnFiltrar">🔍 Buscar</button>
+  </div>
+
+  <!-- Tabla de empleados -->
   <table id="empleadosTable">
     <thead>
       <tr>
-        <th>ID</th>
+        <th></th> <!-- checkbox para selección -->
         <th>Nombre</th>
-        <th>Salario</th>
+        <th>Documento ID</th>
+        <th>Puesto</th>
+        <th>Fecha Contratación</th>
+        <th>Saldo Vacaciones</th>
+        <th>Estado</th>
+        <th>Acciones</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody>
+      <!-- Se llena dinámicamente -->
+    </tbody>
   </table>
 
-  <button id="insertarBtn" onclick="abrirModal()">Insertar</button>
-
-  <!-- Modal de inserción -->
-  <div id="modalInsertar" class="modal">
-    <div class="modal-contenido">
-      <h2>Insertar Empleado</h2>
-      <label for="nombre">Nombre:</label>
-      <input type="text" id="nombre" placeholder="Ingrese el nombre...">
-      <div class="mensaje-error" id="error-nombre"></div>
-
-      <label for="salario">Salario:</label>
-      <input type="text" id="salario" placeholder="Ingrese el salario...">
-      <div class="mensaje-error" id="error-salario"></div>
-
-      <div class="botones">
-        <button class="btn-modal" onclick="validarFormulario()">Insertar</button>
-        <button class="btn-modal" onclick="cerrarModal()">Regresar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modales -->
-  <div id="modalExito" class="modal">
-    <div class="modal-exito-contenido">
-      <h2>✅ Inserción exitosa</h2>
-      <p>El empleado ha sido registrado correctamente.</p>
-      <button onclick="cerrarModalExito()">Aceptar</button>
-    </div>
-  </div>
-
-  <div id="modalError" class="modal">
-    <div class="modal-error-contenido">
-      <h2>⚠️ Error</h2>
-      <p>Empleado ya existe.</p>
-      <button onclick="cerrarModalError()">Aceptar</button>
-    </div>
+  <!-- Botones de acciones -->
+  <div class="acciones-container">
+    <button id="btnInsertar">Insertar empleado nuevo</button>
+    <button id="btnActualizar">Actualizar empleado</button>
+    <button id="btnEliminar">Eliminar empleado</button>
+    <button id="btnListarMov">Listar movimientos del empleado</button>
+    <button id="btnInsertarMov">Insertar movimiento del empleado</button>
   </div>
 
   <script src="../script.js"></script>

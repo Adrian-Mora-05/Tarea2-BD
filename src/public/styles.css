@@ -325,3 +325,22 @@ h1 {
   background-color: #ff6b6b;
   box-shadow: 0 0 10px rgba(229, 57, 53, 0.5);
 }
+
+
+.acciones {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.btn-accion {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin: 0 4px;
+  font-size: 18px;
+  transition: transform 0.1s ease;
+}
+
+.btn-accion:hover {
+  transform: scale(1.2);
+}

@@ -1,173 +1,164 @@
-// --------------------- CARGAR EMPLEADOS ---------------------
-async function cargarEmpleados() {
-  try {
-    const res = await fetch('/empleados');
-    const empleados = await res.json();
-    const tbody = document.querySelector('#empleadosTable tbody');
-    tbody.innerHTML = '';
+document.addEventListener("DOMContentLoaded", () => {
+  const tabla = document.getElementById("empleadosTable").querySelector("tbody");
+  const filtroInput = document.getElementById("filtroInput");
+  const btnFiltrar = document.getElementById("btnFiltrar");
 
-    empleados.forEach(empleado => {
-      const fila = document.createElement('tr');
+  const btnInsertar = document.getElementById("btnInsertar");
+  const btnActualizar = document.getElementById("btnActualizar");
+  const btnEliminar = document.getElementById("btnEliminar");
+  const btnListarMov = document.getElementById("btnListarMov");
+  const btnInsertarMov = document.getElementById("btnInsertarMov");
+
+  let empleados = [];
+  let seleccionado = null;
+
+  // 🔹 Cargar todos los empleados al inicio
+  async function cargarEmpleados() {
+    try {
+      const res = await fetch("/empleados/inicio");
+      if (!res.ok) throw new Error("Error al cargar empleados");
+      empleados = await res.json();
+      mostrarEmpleados(empleados);
+    } catch (error) {
+      console.error(error);
+      alert("No se pudieron cargar los empleados.");
+    }
+  }
+
+  // 🔹 Mostrar empleados en la tabla
+  function mostrarEmpleados(lista) {
+    tabla.innerHTML = "";
+
+    lista.forEach(emp => {
+      const fila = document.createElement("tr");
       fila.innerHTML = `
-        <td>${empleado.id}</td>
-        <td>${empleado.Nombre}</td>
-        <td>${empleado.Salario}</td>
+        <td><input type="radio" name="seleccionEmpleado" value="${emp.ValorDocumentoIdentidad}"></td>
+        <td>${emp.Nombre}</td>
+        <td>${emp.DocumentoIdentidad}</td>
+        <td>${emp.NombrePuesto || ""}</td>
+        <td>${emp.FechaContratacion ? new Date(emp.FechaContratacion).toLocaleDateString() : ""}</td>
+        <td>${emp.SaldoVacaciones?.toFixed(2) ?? "0.00"}</td>
+        <td>${emp.EsActivo === 1 ? "Inactivo" : "Activo"}</td>
+        <td class="acciones">
+          <button class="btn-accion actualizar" title="Actualizar" data-id="${emp.ValorDocumentoIdentidad}">✏️</button>
+          <button class="btn-accion borrar" title="Borrar" data-id="${emp.ValorDocumentoIdentidad}">🗑️</button>
+          <button class="btn-accion insertar-mov" title="Insertar Movimiento" data-id="${emp.ValorDocumentoIdentidad}">➕</button>
+          <button class="btn-accion listar-mov" title="Listar Movimientos" data-id="${emp.ValorDocumentoIdentidad}">📋</button>
+        </td>
       `;
-      tbody.appendChild(fila);
+      tabla.appendChild(fila);
     });
-  } catch (error) {
-    console.error('Error al cargar empleados:', error);
-  }
-}
 
-window.onload = cargarEmpleados;
-
-// --------------------- MODALES Y VALIDACIÓN ---------------------
-
-function abrirModal() {
-  document.getElementById("modalInsertar").style.display = "block";
-}
-
-function cerrarModal() {
-  document.getElementById("modalInsertar").style.display = "none";
-  limpiarFormulario();
-}
-
-function limpiarFormulario() {
-  document.getElementById("nombre").value = "";
-  document.getElementById("salario").value = "";
-  document.getElementById("error-nombre").innerText = "";
-  document.getElementById("error-salario").innerText = "";
-}
-
-function validarFormulario() {
-  const nombreInput = document.getElementById("nombre");
-  const salarioInput = document.getElementById("salario");
-  const nombre = nombreInput.value.trim();
-  const salario = salarioInput.value.replace(/,/g, '').trim();
-
-  const errorNombre = document.getElementById("error-nombre");
-  const errorSalario = document.getElementById("error-salario");
-
-  errorNombre.innerText = "";
-  errorSalario.innerText = "";
-
-  const regexNombre = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\- ]+$/;
-  const regexSalario = /^\d{1,3}(,\d{3})*(\.\d{1,2})?$|^\d+(\.\d{1,2})?$/;
-
-  let esValido = true;
-
-  if (nombre === "") {
-    errorNombre.innerText = "Por favor llenar este campo";
-    esValido = false;
-  } else if (!regexNombre.test(nombre)) {
-    errorNombre.innerText = "El nombre solo debe contener letras o guiones";
-    esValido = false;
+    // Actualizar selección
+    document.querySelectorAll("input[name='seleccionEmpleado']").forEach(radio => {
+      radio.addEventListener("change", (e) => {
+        seleccionado = e.target.value;
+      });
+    });
   }
 
-  if (salario === "") {
-    errorSalario.innerText = "Por favor llenar este campo";
-    esValido = false;
-  } else if (!regexSalario.test(salario)) {
-    errorSalario.innerText = "Ingrese un valor monetario válido";
-    esValido = false;
+  // 🔹 Filtrar empleados
+  btnFiltrar.addEventListener("click", async () => {
+    const filtro = filtroInput.value.trim();
+    let url = "/empleados/listar";
+
+    if (filtro !== "") {
+      url += `?filtro=${encodeURIComponent(filtro)}`;
+    }
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Error al filtrar");
+      const data = await res.json();
+      mostrarEmpleados(data);
+    } catch (err) {
+      console.error(err);
+      alert("No se pudieron filtrar los empleados.");
+    }
+  });
+
+  // 🔹 Validar selección única
+  function validarSeleccion() {
+    if (!seleccionado) {
+      alert("Debe seleccionar un empleado primero.");
+      return false;
+    }
+    return true;
   }
 
-  if (!esValido) return;
+  // 🔹 Acciones
+  btnInsertar.addEventListener("click", () => {
+    // Aquí abrís un modal o formulario de inserción
+    alert("Insertar nuevo empleado (falta implementar modal/formulario).");
+  });
 
-  fetch('/empleados', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ Nombre: nombre, Salario: salario })
-  })
-    .then(async (response) => {
-      const data = await response.json();
+  btnActualizar.addEventListener("click", () => {
+    if (!validarSeleccion()) return;
+    alert(`Actualizar empleado con documento: ${seleccionado}`);
+  });
 
-      if (response.ok && data.success) {
-        cerrarModal();
-        mostrarModalExito();
+  btnEliminar.addEventListener("click", async () => {
+    if (!validarSeleccion()) return;
+    if (!confirm("¿Seguro que desea eliminar este empleado?")) return;
+
+    try {
+      const res = await fetch(`/empleados/${seleccionado}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Error al eliminar empleado");
+      alert("Empleado eliminado correctamente.");
+      cargarEmpleados();
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo eliminar el empleado.");
+    }
+  });
+
+  btnListarMov.addEventListener("click", async () => {
+    if (!validarSeleccion()) return;
+    alert(`Listar movimientos del empleado ${seleccionado}`);
+  });
+
+  btnInsertarMov.addEventListener("click", () => {
+    if (!validarSeleccion()) return;
+    alert(`Insertar movimiento para empleado ${seleccionado}`);
+  });
+
+  
+
+
+  // 🔹 Acciones por fila (usando delegación de eventos)
+  document.getElementById("empleadosTable").addEventListener("click", async (e) => {
+    const btn = e.target.closest(".btn-accion");
+    if (!btn) return; // si no clickeó un botón, salir
+
+    const id = btn.dataset.id;
+
+    if (btn.classList.contains("actualizar")) {
+      alert(`Actualizar empleado con ID ${id}`);
+      // acá luego llamás tu función de actualización
+    } 
+    else if (btn.classList.contains("borrar")) {
+      if (!confirm("¿Seguro que desea eliminar este empleado?")) return;
+      try {
+        const res = await fetch(`/empleados/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("Error al eliminar empleado");
+        alert("Empleado eliminado correctamente.");
         cargarEmpleados();
-      } else {
-        if (data.codigo === 50002) {
-          cerrarModal();
-          mostrarModalError();
-        } else {
-          alert(data.message || 'Error al insertar el empleado.');
-        }
+      } catch (err) {
+        console.error(err);
+        alert("No se pudo eliminar el empleado.");
       }
-    })
-    .catch((error) => {
-      console.error('Error al insertar empleado:', error);
-      alert('Error de servidor al insertar.');
-    });
-}
-
-window.onclick = function(event) {
-  const modal = document.getElementById("modalInsertar");
-  if (event.target === modal) {
-    modal.style.display = "none";
-    limpiarFormulario();
-  }
-};
-
-document.addEventListener("DOMContentLoaded", function () {
-  const nombreInput = document.getElementById("nombre");
-  const salarioInput = document.getElementById("salario");
-
-  const regexNombre = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\- ]+$/;
-  const regexSalario = /^\d{1,3}(,\d{3})*(\.\d{1,2})?$|^\d+(\.\d{1,2})?$/;
-
-  nombreInput.addEventListener("input", function () {
-    const nombre = this.value.trim();
-    if (nombre === "") {
-      document.getElementById("error-nombre").innerText = "Por favor llenar este campo";
-    } else if (!regexNombre.test(nombre)) {
-      document.getElementById("error-nombre").innerText = "El nombre solo debe contener letras o guiones";
-    } else {
-      document.getElementById("error-nombre").innerText = "";
+    } 
+    else if (btn.classList.contains("insertar-mov")) {
+      alert(`Insertar movimiento para el empleado ${id}`);
+    } 
+    else if (btn.classList.contains("listar-mov")) {
+      alert(`Listar movimientos del empleado ${id}`);
     }
   });
 
-  salarioInput.addEventListener("input", function () {
-    let rawValue = this.value.replace(/,/g, '');
-    rawValue = rawValue.replace(/[^0-9.]/g, '');
-    const parts = rawValue.split('.');
 
-    if (parts.length > 2) rawValue = parts[0] + '.' + parts.slice(1).join('');
-    let intPart = parts[0] || "";
-    let decPart = parts[1] || "";
 
-    if (intPart) intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-    let formatted = parts.length === 2
-      ? intPart + '.' + decPart.slice(0, 2)
-      : intPart;
-
-    this.value = formatted;
-
-    if (!regexSalario.test(formatted)) {
-      document.getElementById("error-salario").innerText =
-        "Ingrese un valor monetario válido (ej: 1,000.00)";
-    } else {
-      document.getElementById("error-salario").innerText = "";
-    }
-  });
+  // Cargar al iniciar
+  cargarEmpleados();
 });
-
-function mostrarModalExito() {
-  document.getElementById("modalExito").style.display = "block";
-}
-
-function cerrarModalExito() {
-  document.getElementById("modalExito").style.display = "none";
-}
-
-function mostrarModalError() {
-  document.getElementById("modalError").style.display = "block";
-}
-
-function cerrarModalError() {
-  document.getElementById("modalError").style.display = "none";
-  abrirModal();
-  limpiarFormulario();
-}

@@ -6,6 +6,7 @@ import sql from 'mssql';
  * Recibe opcionalmente un texto de filtro (nombre o documento)
  * Devuelve el conjunto de empleados.
  */
+/*
 export const listarEmpleados = async (filtro = null) => {
   const pool = await getConnection();
   const request = pool.request();
@@ -21,13 +22,14 @@ export const listarEmpleados = async (filtro = null) => {
   const result = await request.execute("SP_ListarEmpleados");
   return result.recordset;
 };
-
+*/
 
 
 /**
  * Inserta un nuevo empleado usando SP_InsertarEmpleados
  */
-export const insertarEmpleado = async (empleado) => {
+
+/*export const insertarEmpleado = async (empleado) => {
   const pool = await getConnection();
   const request = pool.request();
 
@@ -48,3 +50,4 @@ export const insertarEmpleado = async (empleado) => {
   // Retornar el código de resultado para que el controlador lo interprete
   return result.output.outResultCode;
 };
+*/
