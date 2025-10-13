@@ -124,48 +124,76 @@ export const insertarEmpleado = async (req, res) => {
  * Invoca SP_ActualizarEmpleado
  * Se asume signature similar a SP_InsertarEmpleados + inId
  */
+
+export const listarPuestos = async (req, res) => {
+  try {
+    const r = await ejecutarSP('SP_ListarPuestos',
+                                [], // no hay parámetros de entrada
+                                [{ name: 'outResultCode', type: 'Int' }] // parámetro de salida requerido
+                              );
+    const puestos = r.recordset || [];
+    res.json(puestos.sort((a, b) => a.Nombre.localeCompare(b.Nombre)));
+  } catch (error) {
+    console.error('Error al listar puestos:', error);
+    res.status(500).json({ message: 'Error al obtener puestos' });
+  }
+};
+
+export const obtenerLosMovimientos = async (req, res) => {
+  try {
+    const r = await ejecutarSP('SP_ObtenerMovimientos',
+                                [], // no hay parámetros de entrada
+                                [{ name: 'outResultCode', type: 'Int' }] // parámetro de salida requerido
+                              );
+    const movimientos = r.recordset || [];
+    res.json(movimientos.sort((a, b) => a.Nombre.localeCompare(b.Nombre)));
+  } catch (error) {
+    console.error('Error al listar movimientos:', error);
+    res.status(500).json({ message: 'Error al obtener movimientos' });
+  }
+};
+
 export const actualizarEmpleado = async (req, res) => {
   try {
-    const ValorDocumentoIdentidad = req.params.ValorDocumentoIdentidad;
+    const ValorDocumentoIdentidadViejo = req.params.ValorDocumentoIdentidad;
     const {
-      Nombre,
-      IdPuesto,
-      FechaContratacion,
-      SaldoVacaciones,
-      EsActivo
+      valorDocumentoIdentidad: ValorDocumentoIdentidadNuevo,
+      nombre,
+      puesto
     } = req.body;
 
-    if (!ValorDocumentoIdentidad || !Nombre || !IdPuesto) {
+    if (!ValorDocumentoIdentidadViejo || !ValorDocumentoIdentidadNuevo || !nombre || !puesto) {
       return res.status(400).json({ message: 'Faltan campos obligatorios' });
     }
 
     const inputs = [
-      { name: 'inValorDocumentoIdentidad', type: 'VarChar', length: 32, value: ValorDocumentoIdentidad },
-      { name: 'inNombre', type: 'VarChar', length: 64, value: Nombre },
-      { name: 'inIdPuesto', type: 'Int', value: parseInt(IdPuesto, 10) },
-      { name: 'inFechaContratacion', type: 'Date', value: FechaContratacion ? FechaContratacion : null },
-      { name: 'inSaldoVacaciones', type: 'Money', value: SaldoVacaciones ?? null },
-      { name: 'inEsActivo', type: 'Int', value: EsActivo ?? 1 }
+      { name: 'inValorDocumentoIdentidadViejo', type: 'VarChar', length: 50, value: ValorDocumentoIdentidadViejo },
+      { name: 'inValorDocumentoIdentidadNuevo', type: 'VarChar', length: 50, value: ValorDocumentoIdentidadNuevo },
+      { name: 'inIdPuesto', type: 'Int', value: parseInt(puesto, 10) },
+      { name: 'inNombre', type: 'VarChar', length: 100, value: nombre },
+      { name: 'inIdPostByUser', type: 'Int', value: 1 }, // cambiar esto luego con el usuario logueado
+      { name: 'inPostInIP', type: 'NVarChar', length: 50, value: '127.0.0.1' },  // cambiar esto
+      { name: 'inPostTime', type: 'DateTime', value: new Date() }
     ];
 
     const outputs = [{ name: 'outResultCode', type: 'Int' }];
-
     const r = await ejecutarSP('SP_ActualizarEmpleado', inputs, outputs);
     const code = r.output?.outResultCode ?? null;
 
     if (code === 0) return res.json({ success: true });
+    if (code === 50120) return res.status(404).json({ message: 'Empleado no encontrado' });
+    if (code === 50006) return res.status(400).json({ message: 'Documento duplicado' });
+    if (code === 50007) return res.status(400).json({ message: 'Nombre duplicado' });
+    if (code === 50008) return res.status(500).json({ message: 'Error de base de datos' });
 
-    // Mapear errores comunes (ajustá según tus SP reales)
-    if (code === 50120) return res.status(500).json({ success: false, codigo: code, message: 'Empleado no encontrado' });
-    if (code === 50006) return res.status(500).json({ success: false, codigo: code, message: 'Empleado con ValorDocumentoIdentidad ya existe en actualización' });
-    if (code === 50007) return res.status(500).json({ success: false, codigo: code, message: 'Empleado con mismo nombre ya existe en actualización' });
-    if (code === 50008) return res.status(400).json({ success: false, codigo: code, message: 'Error de base de datos' });
-    return res.status(400).json({ success: false, codigo: code, message: 'Error al actualizar empleado' });
+    return res.status(400).json({ message: 'Error desconocido', codigo: code });
+
   } catch (error) {
     console.error('actualizarEmpleado error:', error);
     res.status(500).json({ message: 'Error del servidor al actualizar empleado' });
   }
 };
+
 
 /**
  * DELETE /empleados/:id
@@ -176,7 +204,12 @@ export const borrarEmpleado = async (req, res) => {
     const ValorDocumentoIdentidad = req.params.ValorDocumentoIdentidad;
     if (!ValorDocumentoIdentidad) return res.status(400).json({ message: 'DocumentoIdentidad inválido' });
 
-    const inputs = [{ name: 'inValorDocumentoIdentidad', type: 'VarChar', length: 32, value: ValorDocumentoIdentidad }];
+    const inputs = [{ name: 'inValorDocumentoIdentidad', type: 'NVarChar', length: 50, value: ValorDocumentoIdentidad},
+                    { name: 'inConfirmado', type: 'Bit', value: 1 }, // Confirmado = true
+                     { name: "inIdPostByUser", type: "Int", value: 1 }, // luego reemplazamos con el usuario logueado
+                     { name: "inPostInIP", type: "NVarChar", length: 50, value: "127.0.0.1" },
+                     { name: "inPostTime", type: "DateTime", value: new Date() },
+    ];
     const outputs = [{ name: 'outResultCode', type: 'Int' }];
 
     const r = await ejecutarSP('SP_BorrarEmpleado', inputs, outputs);
@@ -199,51 +232,76 @@ export const borrarEmpleado = async (req, res) => {
 export const listarMovimientos = async (req, res) => {
   try {
     const ValorDocumentoIdentidad = req.params.ValorDocumentoIdentidad;
-    if (!ValorDocumentoIdentidad) return res.status(400).json({ message: 'DocumentoIdentidad inválido' });
+    if (!ValorDocumentoIdentidad) return res.status(400).json({ message: 'DocumentoIdentidad requerido' });
 
-    const inputs = [{ name: 'inValorDocumentoIdentidad', type: 'VarChar', length: 32, value: ValorDocumentoIdentidad }];
-    const r = await ejecutarSP('SP_ListarMovimientos', inputs, []);
-    res.json(r.recordset || []);
+    const inputs = [{ name: 'inIdEmpleado', type: 'VarChar', length: 32, value: ValorDocumentoIdentidad }];
+    const outputs = [
+      { name: 'outResultCode', type: 'Int' }
+    ];
+    const resultado = await ejecutarSP('SP_ListarMovimientos', inputs, outputs);
+
+    const code = resultado.output?.outResultCode ?? 50008;
+
+    if (code !== 0) {
+      return res.status(400).json({ success: false, codigo: code, message: 'Error al listar movimientos' });
+    }
+
+    return res.json({ success: true, movimientos: resultado.recordset });
   } catch (error) {
-    console.error('listarMovimientos error:', error);
-    res.status(500).json({ message: 'Error al listar movimientos' });
+    console.error("Error al listar movimientos:", error);
+    res.status(500).json({ message: "Error del servidor al listar movimientos" });
   }
-};
+};  
 
 /**
  * POST /movimientos
  * Invoca SP_InsertarMovimiento
  */
+
+
+
+
+
+
+
+
+
+
+
 export const insertarMovimiento = async (req, res) => {
   try {
     const {
-      ValorDocumentoIdentidad,
-      IdTipoMovimiento,
-      Fecha = null,
-      Monto,
-      IdPostByUser = null,
-      PostInIP = null,
-      PostTime = null
+      valorDocumentoIdentidad,
+      idTipoMovimiento,
+      fecha,
+      monto,
+      idPostByUser,
+      postInIP,
+      postTime
     } = req.body;
 
-    if (!ValorDocumentoIdentidad || !IdTipoMovimiento || Monto == null) {
-      return res.status(400).json({ message: 'Faltan campos obligatorios (ValorDocumentoIdentidad, IdTipoMovimiento, Monto, NuevoSaldo)' });
+    if (!valorDocumentoIdentidad || !idTipoMovimiento || !fecha || !monto || !idPostByUser || !postInIP || !postTime) {
+      return res.status(400).json({ message: "Faltan datos obligatorios" });
     }
 
     const inputs = [
-      { name: 'inValorDocumentoIdentidad', type: 'VarChar', length: 32, value: ValorDocumentoIdentidad },
-      { name: 'inIdTipoMovimiento', type: 'Int', value: parseInt(IdTipoMovimiento, 10) },
-      { name: 'inFecha', type: 'DateTime', value: Fecha ? Fecha : new Date() },
-      { name: 'inMonto', type: 'Money', value: Monto },
-      { name: 'inIdPostByUser', type: 'Int', value: IdPostByUser ? parseInt(IdPostByUser, 10) : null },
-      { name: 'inPostInIP', type: 'VarChar', length: 15, value: PostInIP || req.ip || '' },
-      { name: 'inPostTime', type: 'DateTime', value: PostTime ? PostTime : new Date() },
+      { name: 'inIdEmpleado', type: 'VarChar', length: 32, value: valorDocumentoIdentidad},
+      { name: 'inIdTipoMovimiento', type: 'Int', value: parseInt(idTipoMovimiento, 10) },
+      { name: 'inFecha', type: 'DateTime', value: fecha ? fecha : new Date() },
+      { name: 'inMonto', type: 'Money', value: monto },
+      { name: 'inIdPostByUser', type: 'Int', value: idPostByUser ? parseInt(idPostByUser, 10) : null },
+      { name: 'inPostInIP', type: 'VarChar', length: 15, value: postInIP || req.ip || '' },
+      { name: 'inPostTime', type: 'DateTime', value: postTime ? postTime : new Date() },
     ];
 
     const outputs = [{ name: 'outResultCode', type: 'Int' }];
 
     const r = await ejecutarSP('SP_InsertarMovimiento', inputs, outputs);
+    console.log("r de SP_InsertarMovimiento:", r);
+
+    
     const code = r.output?.outResultCode ?? null;
+ 
 
     if (code === 0) return res.status(201).json({ success: true });
     // mapear errores comunes que defina tu SP_InsertarMovimiento
@@ -252,7 +310,7 @@ export const insertarMovimiento = async (req, res) => {
     return res.status(400).json({ success: false, codigo: code, message: 'Error al insertar movimiento' });
   } catch (error) {
     console.error('insertarMovimiento error:', error);
-    res.status(500).json({ message: 'Error del servidor al insertar movimiento' });
+    res.status(500).json({ message: 'Error del servidor al insertar movimiento'});
   }
 };
  

@@ -11,7 +11,9 @@ import {
   actualizarEmpleado,
   borrarEmpleado,
   listarMovimientos,
-  insertarMovimiento
+  insertarMovimiento,
+  obtenerLosMovimientos,
+  listarPuestos
 } from '../controllers/empleados.controllers.js';
 
 // Crea una instancia del enrutador
@@ -20,14 +22,13 @@ const router = Router();
 // Definición de rutas para la entidad "Empleados"
 router.get('/inicio', listarInicioEmpleados);
 router.get('/listar', listarEmpleados);
+router.get('/puestos', listarPuestos);
+router.get('/movimientos', obtenerLosMovimientos);
 router.post('/', insertarEmpleado);
 router.put('/:ValorDocumentoIdentidad', actualizarEmpleado);
 router.delete('/:ValorDocumentoIdentidad', borrarEmpleado);
 router.get('/:ValorDocumentoIdentidad/movimientos', listarMovimientos);
-router.post('/:valorDocumentoIdentidad/movimientos', (req, res, next) => {
-          req.body.ValorDocumentoIdentidad = req.params.ValorDocumentoIdentidad;
-          next();
-        }, insertarMovimiento);
+router.post('/:valorDocumentoIdentidad/movimientos', insertarMovimiento);
 
 
 
