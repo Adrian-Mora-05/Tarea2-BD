@@ -24,7 +24,7 @@ export const listarInicioEmpleados = async (req, res) => {
           { name: 'Filtro', type: 'NVarChar', length: 100, value: null },
           { name: 'inIdPostByUser', type: 'Int', value: 1 } // Id UsuarioScripts = 1 )
         ],
-        []
+        [{ name: 'outResultCode', type: 'Int' }]
       );
       return res.json(r.recordset || []);
     }
@@ -44,13 +44,16 @@ export const listarEmpleados = async (req, res) => {
   try {
     const filtro = req.query.nombre ?? req.query.documento ?? req.query.filtro ?? null;
     const postTime = new Date();
+    const userId = parseInt(req.headers['x-user-id'], 10) || 3;
+    const userIP = req.headers['x-user-ip'] || '127.0.0.1';
     const r = await ejecutarSP(
                 'SP_ListarEmpleadosFiltrados', 
-                [{ name: 'Filtro', type: 'NVarChar', length: 100, value: filtro },
-                  { name: 'inIdPostByUser', type: 'Int', value: 1 }, // Id UsuarioScripts = 1
-                  { name: 'inPostInIP', type: 'NVarChar', length: 50, value: '14.127.138.177' }, // null = todos
+                [{ name: 'inFiltro', type: 'NVarChar', length: 100, value: filtro },
+                  { name: 'inIdPostByUser', type: 'Int', value: userId}, // Id UsuarioScripts = 1
+                  { name: 'inPostInIP', type: 'NVarChar', length: 50, value: userIP}, // null = todos
                   { name: 'inPostTime', type: 'DateTime', value: postTime } // 1=Nombre ASC
-                ], []);
+                ], 
+              [{ name: 'outResultCode', type: 'Int' }]);
     res.json(r.recordset || []);
   } catch (error) {
     console.error('Error listarEmpleados:', error);
@@ -70,23 +73,50 @@ export const insertarEmpleado = async (req, res) => {
       ValorDocumentoIdentidad,
       Nombre,
       IdPuesto,
-      FechaContratacion = null,
+      FechaContratacion,
       SaldoVacaciones = 0,
       EsActivo = 1
     } = req.body;
 
-    // Validaciones básicas
     if (!ValorDocumentoIdentidad || !Nombre || !IdPuesto) {
-      return res.status(400).json({ message: 'Faltan campos obligatorios: ValorDocumentoIdentidad, Nombre, IdPuesto' });
+      return res.status(400).json({ message: 'Faltan campos obligatorios: Documento de identidad, nombre, puesto' });
     }
+
+      // Obtener fecha/hora actual en zona horaria de Costa Rica
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Costa_Rica',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+
+    const fechaHoraCRString = formatter.format(new Date()); // Ej: "10/18/2025, 14:45:30"
+    const [fechaCR, horaCR] = fechaHoraCRString.split(', ');
+    const [mes, dia, anio] = fechaCR.split('/');
+    const fechaHoraCostaRica = new Date(`${anio}-${mes}-${dia}T${horaCR}`);
+
+    // Si no se recibe FechaContratacion, usar la fecha actual de CR (sin hora)
+    const fechaContratacionCR = FechaContratacion
+      ? new Date(FechaContratacion)
+      : new Date(`${anio}-${mes}-${dia}`); // "YYYY-MM-DD" formato local
+
+    const userId = parseInt(req.headers['x-user-id'], 10) || 3;
+    const userIP = req.headers['x-user-ip'] || '127.0.0.1';
 
     const inputs = [
       { name: 'inValorDocumentoIdentidad', type: 'VarChar', length: 32, value: ValorDocumentoIdentidad },
       { name: 'inNombre', type: 'VarChar', length: 64, value: Nombre },
       { name: 'inIdPuesto', type: 'Int', value: parseInt(IdPuesto, 10) },
-      { name: 'inFechaContratacion', type: 'Date', value: FechaContratacion ? FechaContratacion : null },
+      { name: 'inFechaContratacion', type: 'Date', value: fechaContratacionCR  },
       { name: 'inSaldoVacaciones', type: 'Money', value: SaldoVacaciones },
       { name: 'inEsActivo', type: 'Int', value: EsActivo },
+      { name: 'inIdPostByUser', type: 'Int', value: userId }, // 
+      { name: 'inPostInIP', type: 'NVarChar', length: 50, value: userIP },  
+      { name: 'inPostTime', type: 'DateTime', value: fechaHoraCostaRica  }
     ];
 
     const outputs = [{ name: 'outResultCode', type: 'Int' }];
@@ -100,10 +130,8 @@ export const insertarEmpleado = async (req, res) => {
 
     // Mapear códigos de error comunes del SP a respuestas HTTP y mensajes
     const map = {
-      50003: { status: 400, message: 'Empleado con ValorDocumentoIdentidad ya existe' },
-      50004: { status: 400, message: 'Empleado con mismo nombre ya existe' },
-      50009: { status: 400, message: 'Puesto no existe' },
-      50007: { status: 400, message: 'Nombre no válido' },
+      50004: { status: 400, message: 'Empleado con documento identidad ya existe' },
+      50005: { status: 400, message: 'Empleado con mismo nombre ya existe' },
       50008: { status: 500, message: 'Error en base de datos' },
     };
 
@@ -166,13 +194,17 @@ export const actualizarEmpleado = async (req, res) => {
       return res.status(400).json({ message: 'Faltan campos obligatorios' });
     }
 
+    const userId = parseInt(req.headers['x-user-id'], 10) || 3;
+    const userIP = req.headers['x-user-ip'] || '127.0.0.1';
+
+
     const inputs = [
       { name: 'inValorDocumentoIdentidadViejo', type: 'VarChar', length: 50, value: ValorDocumentoIdentidadViejo },
       { name: 'inValorDocumentoIdentidadNuevo', type: 'VarChar', length: 50, value: ValorDocumentoIdentidadNuevo },
       { name: 'inIdPuesto', type: 'Int', value: parseInt(puesto, 10) },
       { name: 'inNombre', type: 'VarChar', length: 100, value: nombre },
-      { name: 'inIdPostByUser', type: 'Int', value: 1 }, // cambiar esto luego con el usuario logueado
-      { name: 'inPostInIP', type: 'NVarChar', length: 50, value: '127.0.0.1' },  // cambiar esto
+      { name: 'inIdPostByUser', type: 'Int', value: userId }, // cambiar esto luego con el usuario logueado
+      { name: 'inPostInIP', type: 'NVarChar', length: 50, value: userIP },  // cambiar esto
       { name: 'inPostTime', type: 'DateTime', value: new Date() }
     ];
 
@@ -204,10 +236,13 @@ export const borrarEmpleado = async (req, res) => {
     const ValorDocumentoIdentidad = req.params.ValorDocumentoIdentidad;
     if (!ValorDocumentoIdentidad) return res.status(400).json({ message: 'DocumentoIdentidad inválido' });
 
+    const userId = parseInt(req.headers['x-user-id'], 10) || 3;
+    const userIP = req.headers['x-user-ip'] || '127.0.0.1';
+
     const inputs = [{ name: 'inValorDocumentoIdentidad', type: 'NVarChar', length: 50, value: ValorDocumentoIdentidad},
                     { name: 'inConfirmado', type: 'Bit', value: 1 }, // Confirmado = true
-                     { name: "inIdPostByUser", type: "Int", value: 1 }, // luego reemplazamos con el usuario logueado
-                     { name: "inPostInIP", type: "NVarChar", length: 50, value: "127.0.0.1" },
+                     { name: "inIdPostByUser", type: "Int", value: userId }, // luego reemplazamos con el usuario logueado
+                     { name: "inPostInIP", type: "NVarChar", length: 50, value: userIP },
                      { name: "inPostTime", type: "DateTime", value: new Date() },
     ];
     const outputs = [{ name: 'outResultCode', type: 'Int' }];
@@ -261,13 +296,6 @@ export const listarMovimientos = async (req, res) => {
 
 
 
-
-
-
-
-
-
-
 export const insertarMovimiento = async (req, res) => {
   try {
     const {
@@ -284,13 +312,16 @@ export const insertarMovimiento = async (req, res) => {
       return res.status(400).json({ message: "Faltan datos obligatorios" });
     }
 
+    const userId = parseInt(req.headers['x-user-id'], 10) || 3;
+    const userIP = req.headers['x-user-ip'] || '127.0.0.1';
+
     const inputs = [
       { name: 'inIdEmpleado', type: 'VarChar', length: 32, value: valorDocumentoIdentidad},
       { name: 'inIdTipoMovimiento', type: 'Int', value: parseInt(idTipoMovimiento, 10) },
       { name: 'inFecha', type: 'DateTime', value: fecha ? fecha : new Date() },
       { name: 'inMonto', type: 'Money', value: monto },
-      { name: 'inIdPostByUser', type: 'Int', value: idPostByUser ? parseInt(idPostByUser, 10) : null },
-      { name: 'inPostInIP', type: 'VarChar', length: 15, value: postInIP || req.ip || '' },
+      { name: 'inIdPostByUser', type: 'Int', value: userId },
+      { name: 'inPostInIP', type: 'VarChar', length: 15, value: userIP },
       { name: 'inPostTime', type: 'DateTime', value: postTime ? postTime : new Date() },
     ];
 

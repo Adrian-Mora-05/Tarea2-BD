@@ -10,10 +10,15 @@
 
   <!-- Sección de búsqueda -->
   <div class="filtro-container">
-    <input type="text" id="filtroInput" placeholder="Buscar por nombre o documento...">
-     <button id="btnFiltrar">🔍 Buscar</button>
-     <button id="btnInsertar">✍️ Insertar empleado nuevo</button>
+    <div class="filtro-left">
+      <button id="btnInsertarEmpleado">✍️ Insertar empleado nuevo</button>
+    </div>
+    <div class="filtro-right">
+      <input type="text" id="filtroInput" placeholder="Buscar por nombre o valor de identidad..." />
+      <button id="btnFiltrar">🔍 Buscar</button>
+    </div>
   </div>
+
 
   <!-- Tabla de empleados -->
   <table id="empleadosTable">
@@ -153,6 +158,23 @@
     </form>
   </div>
 </div>
+
+<div class="logout-container" style="text-align: right; margin-top: 20px;">
+  <button id="btnCerrarSesion" style="
+     padding: 10px 20px;
+     font-family: 'TASA Orbiter', sans-serif;
+     font-size: 16px;
+     font-weight: bold;
+     background-color: #79020e;
+     color: white;
+     border: none;
+     border-radius: 8px;
+     cursor: pointer;
+  ">
+    🔒 Cerrar Sesión
+  </button>
+</div>
+
 
 
   <script src="../script.js"></script>

@@ -2,6 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const tabla = document.getElementById("empleadosTable").querySelector("tbody");
   const filtroInput = document.getElementById("filtroInput");
   const btnFiltrar = document.getElementById("btnFiltrar");
+  const btnInsertarEmpleado = document.getElementById("btnInsertarEmpleado");
+
 
   let empleados = [];
   let seleccionado = null;
@@ -30,7 +32,14 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${emp.Nombre}</td>
         <td>${emp.DocumentoIdentidad}</td>
         <td>${emp.NombrePuesto || ""}</td>
-        <td>${emp.FechaContratacion ? new Date(emp.FechaContratacion).toLocaleDateString() : ""}</td>
+        <td>${
+          emp.FechaContratacion
+            ? (() => {
+                const [year, month, day] = emp.FechaContratacion.slice(0, 10).split("-");
+                return `${day}/${month}/${year}`;
+              })()
+            : ""
+        }</td>
         <td>${emp.SaldoVacaciones?.toFixed(2) ?? "0.00"}</td>
         <td style="color: ${Number(emp.EsActivo) === 1 ? 'black' : 'red'};">
           ${Number(emp.EsActivo) === 1 ? "Activo" : "Inactivo"}
@@ -66,7 +75,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-User-Id": sessionStorage.getItem('userId'),
+        "X-User-IP": sessionStorage.getItem('userIP')
+      }
+    });
       if (!res.ok) throw new Error("Error al filtrar");
       const data = await res.json();
       mostrarEmpleados(data);
@@ -78,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function obtenerPuestos() {
     try {
-      const res = await fetch('/empleados/puestos'); // Asegurate de tener esta ruta en el backend
+      const res = await fetch('/empleados/puestos'); 
       if (!res.ok) throw new Error('No se pudieron obtener los puestos');
       return await res.json();
     } catch (err) {
@@ -86,6 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return [];
     }
   }
+  
 
 
   async function obtenerMovimientos() {
@@ -103,6 +120,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const nombreInput = document.getElementById("nombreInput");
   const docError = document.getElementById("docError");
   const nombreError = document.getElementById("nombreError");
+  
+  const insertDocInput = document.getElementById("docInputInsertar");
+  const insertNombreInput = document.getElementById("nombreInputInsertar");
+  const insertDocError = document.getElementById("docErrorInsertar");
+  const insertNombreError = document.getElementById("nombreErrorInsertar"); 
 
   // Documento: solo números
   docInput.addEventListener("input", function () {
@@ -140,6 +162,142 @@ document.addEventListener("DOMContentLoaded", () => {
       nombreError.textContent = "Solo se permiten letras, espacios, guiones y un punto.";
     }
   });
+ 
+  insertDocInput.addEventListener("input", function () {
+    const original = this.value;
+    const limpio = original.replace(/\D/g, "");
+    this.value = limpio;
+
+    if (original !== limpio) {
+      insertDocError.textContent = "Documento identidad solo puede ser numérico.";
+    } else {
+      insertDocError.textContent = "";
+    }
+  });
+
+  insertNombreInput.addEventListener("input", function () {
+    let valor = this.value;
+    const limpio = valor.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ .\-]/g, "");
+
+    // Solo un punto permitido
+    const partes = limpio.split(".");
+    if (partes.length > 2) {
+      valor = partes[0] + "." + partes.slice(1).join("").replace(/\./g, "");
+      insertNombreError.textContent = "Solo se permite un punto.";
+    } else {
+      insertNombreError.textContent = "";
+      valor = limpio;
+    }
+
+    this.value = valor;
+
+    if (valor !== this.value) {
+      insertNombreError.textContent = "Solo letras, guiones, espacios y un punto.";
+    }
+  });
+
+
+  // Insertar nuevo empleado
+  
+  btnInsertarEmpleado.addEventListener("click", async () => {
+    const puestos = await obtenerPuestos();
+    if (puestos.length === 0) {
+      mostrarNotificacion("No hay puestos disponibles para asignar.", "error");
+      return;
+    }
+    mostrarModalInsertarEmpleado(puestos);
+  });
+
+mostrarModalInsertarEmpleado = (puestos) => {
+  const modal = document.getElementById("modalInsertarEmpleado");
+  const overlay = document.getElementById("modalOverlay");
+  const form = document.getElementById("formInsertarEmpleado");
+
+  const insertDocInput = document.getElementById("docInputInsertar");
+  const insertNombreInput = document.getElementById("nombreInputInsertar");
+  const insertDocError = document.getElementById("docErrorInsertar");
+  const insertNombreError = document.getElementById("nombreErrorInsertar");
+  const puestoSelect = document.getElementById("puestoSelectInsertar");
+  const cancelarBtn = document.getElementById("cancelarInsertarBtn");
+
+  // Limpiar campos y errores
+  insertDocInput.value = "";
+  insertNombreInput.value = "";
+  insertDocError.textContent = "";
+  insertNombreError.textContent = "";
+
+  insertDocInput.classList.remove("input-error");
+  insertNombreInput.classList.remove("input-error");
+  puestoSelect.classList.remove("input-error");
+
+  // Cargar puestos
+  puestoSelect.innerHTML = puestos
+    .map(p => `<option value="${p.id}">${p.Nombre}</option>`)
+    .join("");
+
+  modal.style.display = "flex";     
+  overlay.style.display = "block";
+
+  cancelarBtn.onclick = () => {
+    modal.style.display = "none";
+    overlay.style.display = "none";
+  };
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+
+    const nuevoDoc = insertDocInput.value.trim();
+    const nuevoNombre = insertNombreInput.value.trim();
+    const nuevoIdPuesto = parseInt(puestoSelect.value);
+
+    if (!nuevoDoc || !nuevoNombre || isNaN(nuevoIdPuesto)) {
+      mostrarNotificacion("Todos los campos son obligatorios.", "error");
+
+      insertDocInput.classList.toggle("input-error", !nuevoDoc);
+      insertNombreInput.classList.toggle("input-error", !nuevoNombre);
+      puestoSelect.classList.toggle("input-error", isNaN(nuevoIdPuesto));
+
+      return;
+    }
+
+    // Quitar errores visuales si todo está bien
+    insertDocInput.classList.remove("input-error");
+    insertNombreInput.classList.remove("input-error");
+    puestoSelect.classList.remove("input-error");
+
+    try {
+      const res = await fetch("/empleados", {
+        method: "POST",
+         headers: { "Content-Type": "application/json",
+                    'X-User-Id': sessionStorage.getItem('userId'),
+                    'X-User-IP': sessionStorage.getItem('userIP')
+         },
+        body: JSON.stringify({
+          ValorDocumentoIdentidad: nuevoDoc,
+          Nombre: nuevoNombre,
+          IdPuesto: nuevoIdPuesto
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Error al insertar empleado.");
+      }
+
+      mostrarNotificacion("Empleado insertado correctamente.", "success");
+      modal.style.display = "none";
+      overlay.style.display = "none";
+      cargarEmpleados();
+    } catch (err) {
+      console.error(err);
+      mostrarNotificacion(err.message, "error");
+    }
+  };
+}
+
+
+
 
 
   // Acciones por fila (usando delegación de eventos)
@@ -166,7 +324,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const confirmado = await mostrarConfirmacion("¿Seguro que desea eliminar este empleado?");
       if (!confirmado) return;
       try {
-        const res = await fetch(`/empleados/${id}`, { method: "DELETE" });
+        const res = await fetch(`/empleados/${id}`, 
+          { method: "DELETE",
+            headers: {
+        "Content-Type": "application/json",
+        "X-User-Id": sessionStorage.getItem('userId'),
+        "X-User-IP": sessionStorage.getItem('userIP')
+      }
+           });
         if (!res.ok) throw new Error("Error al eliminar empleado");
         mostrarNotificacion("Empleado eliminado correctamente.", "success");
         cargarEmpleados();
@@ -302,7 +467,10 @@ function mostrarModalActualizar(emp, puestos) {
 
       const res = await fetch(`/empleados/${emp.DocumentoIdentidad}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json",
+                    'X-User-Id': sessionStorage.getItem('userId'),
+                    'X-User-IP': sessionStorage.getItem('userIP')
+         },
         body: JSON.stringify({
           valorDocumentoIdentidad: nuevoDoc,
           nombre: nuevoNombre,
@@ -394,7 +562,10 @@ async function mostrarModalInsertarMovimiento(emp, movimientos) {
 
       const res = await fetch(`/empleados/${emp.DocumentoIdentidad}/movimientos`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json",           
+        "X-User-Id": sessionStorage.getItem('userId'),
+        "X-User-IP": sessionStorage.getItem('userIP')
+         },
         body: JSON.stringify(payload)
       });
 
@@ -414,6 +585,44 @@ async function mostrarModalInsertarMovimiento(emp, movimientos) {
     }
   };
 }
+
+
+
+// Función de cerrar sesión
+document.getElementById('btnCerrarSesion').addEventListener('click', async () => {
+  const userId = sessionStorage.getItem('userId');
+  const userIP = sessionStorage.getItem('userIP');
+  if (!userId) {
+    // Si no hay userId, simplemente limpiar y redirigir
+    sessionStorage.clear();
+    window.location.href = 'login.html';  
+    return;
+  }
+
+  try {
+    const res = await fetch('/empleados/logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId,
+        'X-User-IP': userIP
+      },
+      body: JSON.stringify({})  // aunque no pases cuerpo, puedes enviar {} o nada
+    });
+
+    if (!res.ok) throw new Error('Error al cerrar sesión');
+
+    // Limpia almacenamiento local
+    sessionStorage.clear();
+
+    // Redirige a login
+    window.location.href = 'login.html';
+
+  } catch (err) {
+    console.error('Error al hacer logout:', err);
+    alert('No se pudo cerrar sesión. Por favor, intente nuevamente.');
+  }
+});
 
   
 
@@ -475,6 +684,9 @@ document.addEventListener("click", function (event) {
     overlay.style.display = "none";
   }
 });
+
+
+
 
 
 

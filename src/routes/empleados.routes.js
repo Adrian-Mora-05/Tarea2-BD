@@ -16,6 +16,11 @@ import {
   listarPuestos
 } from '../controllers/empleados.controllers.js';
 
+import {
+  hacerLogin,
+  hacerLogout
+} from '../controllers/login.controllers.js';
+
 // Crea una instancia del enrutador
 const router = Router();
 
@@ -29,6 +34,8 @@ router.put('/:ValorDocumentoIdentidad', actualizarEmpleado);
 router.delete('/:ValorDocumentoIdentidad', borrarEmpleado);
 router.get('/:ValorDocumentoIdentidad/movimientos', listarMovimientos);
 router.post('/:valorDocumentoIdentidad/movimientos', insertarMovimiento);
+router.post('/login', hacerLogin);
+router.post('/logout', hacerLogout);
 
 
 

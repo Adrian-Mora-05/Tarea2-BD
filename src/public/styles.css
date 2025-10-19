@@ -15,6 +15,162 @@ h1 {
   font-size: 42px; 
 }
 
+/* Solo aplica estos estilos si el body tiene la clase "inicio" */
+body.inicio {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(to right, #e0f7fa, #fffde7);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'TASA Orbiter', Arial, sans-serif;
+  text-align: center;
+}
+
+body.inicio h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+body.inicio p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: #444;
+}
+
+body.inicio .menu-principal {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+body.inicio .menu-principal button {
+  padding: 15px 30px;
+  font-size: 1rem;
+  font-family: 'TASA Orbiter', sans-serif;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  background-color: #0199b4;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+body.inicio .menu-principal button:hover {
+  background-color: #008fa1;
+  transform: scale(1.05);
+}
+
+@media (max-width: 500px) {
+  body.inicio .menu-principal {
+    flex-direction: column;
+    gap: 15px;
+  }
+}
+
+
+/* Contenedor principal del filtro */
+.filtro-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px auto;
+  max-width: 1000px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+/* Lado izquierdo (Insertar) */
+.filtro-left {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* Lado derecho (Buscar) */
+.filtro-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Input de búsqueda */
+#filtroInput {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: 'TASA Orbiter', sans-serif;
+  width: 320px;
+  transition: border-color 0.3s ease;
+}
+
+#filtroInput:focus {
+  border-color: #007BFF;
+  outline: none;
+}
+
+/* Botones modernos */
+#btnFiltrar,
+#btnInsertarEmpleado {
+  padding: 6px 14px;
+  font-family: 'TASA Orbiter', sans-serif;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+#btnFiltrar {
+  background-color: #007BFF;
+  color: white;
+}
+
+#btnFiltrar:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+#btnInsertarEmpleado {
+  background-color: #28a745;
+  color: white;
+}
+
+#btnInsertarEmpleado:hover {
+  background-color: #1e7e34;
+  transform: scale(1.05);
+}
+
+/* Responsive para pantallas más pequeñas */
+@media (max-width: 768px) {
+  .filtro-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filtro-left,
+  .filtro-right {
+    justify-content: center;
+  }
+
+  #filtroInput {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+
+
+
+
 /* Estilos generales de la tabla */
 #empleadosTable {
   width: 80%;
@@ -720,13 +876,17 @@ h1 {
 /* Fondo semi-transparente del modal */
 .modal-insertar-empleado {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(255, 165, 0, 0.2);
-  display: flex;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  display: none; /* <- esto se mantiene */
   justify-content: center;
   align-items: center;
-  z-index: 1000;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+  overflow-y: auto;
 }
 
 /* Contenido modal */
@@ -737,13 +897,17 @@ h1 {
   padding: 2rem 3rem;
   width: 420px;
   max-width: 90%;
-  border: 3px solid #ff8c00;
+  border: 3px solid #ff7300;
+
+  /* Centrado vertical con animación opcional */
+  margin: 5% auto;
+  animation: fadeInUp 0.4s ease-out;
 }
 
 /* Título */
 .modal-insertar-empleado__title {
   margin-bottom: 1.2rem;
-  color: #ff9b4e;
+  color: #97480b;
   font-weight: 700;
   font-size: 1.8rem;
   text-align: center;
@@ -793,7 +957,6 @@ h1 {
   height: 18px; /* espacio fijo para que no mueva layout */
   margin-top: 3px;
   font-weight: 600;
-  font-family: monospace;
 }
 
 /* Botones */
@@ -832,10 +995,22 @@ h1 {
 }
 
 .btn--secondary:hover {
-  background-color: #ffefc3;
+  background-color: #f7f0dd;
 }
 
 .input-error {
   border-color: #e74c3c !important;
   box-shadow: 0 0 6px #e74c3caa !important;
+}
+
+/* Animación */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
