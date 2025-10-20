@@ -3,8 +3,7 @@ import { getConnection } from './connection.js';
 import sql from 'mssql';
 
 /**
- * Mapa simple de nombres de tipos a sql.<Tipo>
-
+ * Mapa simple de nombres de tipos a sql.
  */
 const TYPE_MAP = {
   Int: sql.Int,
@@ -20,9 +19,9 @@ const TYPE_MAP = {
 /**
  * Ejecuta un stored procedure cualquiera, sin importar los parametros o cuál SP es.
  *
- * @param {string} spName - nombre del SP (ej: 'SP_ListarEmpleados')
- * @param {Array} inputs - array de { name, type, value, length? } (type: 'Int'|'VarChar'|...)
- * @param {Array} outputs - array de { name, type, length? }
+ * @param {string} spName - nombre del SP 
+ * @param {Array} inputs - array de 
+ * @param {Array} outputs - array de 
  *
  * @returns {Promise<object>} resultado bruto devuelto por mssql (recordset, output, rowsAffected...)
  */
@@ -67,7 +66,7 @@ export async function ejecutarSP(spName, inputs = [], outputs = []) {
       req.output(name, sqlType);
     }
   }
-
+//error
   const resultado = await req.execute(spName);
   return resultado;
   } catch (error) {
